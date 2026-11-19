@@ -1,0 +1,9 @@
+sample_id,patient_id,cohort,condition,cancer_type,stage,measured_tf,bam_path
+SRR12340001,PT_CTRL_001,PRJNA795275,Healthy,Healthy,NA,0.000,data/raw/bam/SRR12340001.sorted.bam
+SRR12340002,PT_CTRL_002,PRJNA795275,Healthy,Healthy,NA,0.000,data/raw/bam/SRR12340002.sorted.bam
+SRR12340003,PT_CTRL_003,PRJNA795275,Healthy,Healthy,NA,0.000,data/raw/bam/SRR12340003.sorted.bam
+SRR12340004,PT_LUNG_001,PRJNA795275,Cancer,Lung,Stage I,0.045,data/raw/bam/SRR12340004.sorted.bam
+SRR12340005,PT_LUNG_002,PRJNA795275,Cancer,Lung,Stage II,0.112,data/raw/bam/SRR12340005.sorted.bam
+SRR12340006,PT_CRC_001,PRJNA795275,Cancer,Colorectal,Stage I,0.038,data/raw/bam/SRR12340006.sorted.bam
+SRR12340007,PT_CRC_002,PRJNA795275,Cancer,Colorectal,Stage III,0.185,data/raw/bam/SRR12340007.sorted.bam
+SRR12340008,PT_BRCA_001,PRJNA795275,Cancer,Breast,Stage I,0.021,data/raw/bam/SRR12340008.sorted.bam

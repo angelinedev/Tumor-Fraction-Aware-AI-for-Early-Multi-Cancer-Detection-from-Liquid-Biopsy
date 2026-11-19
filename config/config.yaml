@@ -1,0 +1,96 @@
+# ==============================================================================
+# Configuration: Tumor-Fraction-Aware AI for Early Multi-Cancer Detection (MCED)
+# ==============================================================================
+
+project:
+  name: "mced-cfdna"
+  title: "Tumor-Fraction-Aware AI for Early Multi-Cancer Detection from Liquid Biopsy"
+  version: "0.1.0"
+  random_seed: 42
+
+paths:
+  metadata: "data/metadata/sample_sheet.csv"
+  sra_run_table: "data/metadata/SraRunTable.csv"
+  raw_fastq_dir: "data/raw/fastq"
+  raw_bam_dir: "data/raw/bam"
+  diluted_bam_dir: "data/processed/dilutions"
+  features_dir: "data/processed/features"
+  merged_feature_matrix: "data/processed/merged_features.parquet"
+  results_dir: "results"
+  models_dir: "models"
+  metrics_csv: "results/metrics_by_tf.csv"
+  confusion_matrices_dir: "results/confusion_matrices"
+  reference_genome: "references/GRCh38.fa"
+  chrom_sizes: "references/GRCh38.chrom.sizes"
+  mappability_blacklist: "references/hg38-blacklist.v2.bed"
+
+in_silico_dilution:
+  # Target tumor fractions evaluated for low-TF sensitivity analysis
+  fractions:
+    - 0.10   # 10% (Late/moderate stage benchmark)
+    - 0.05   # 5%  (Standard sWGS detection boundary)
+    - 0.01   # 1%  (Early stage critical detection target)
+    - 0.001  # 0.1% (Extreme low-fraction sensitivity limit)
+  target_total_reads: 20000000  # Standardized 20M paired-end reads (~1x low-pass WGS)
+  replicates_per_pair: 2
+  seed: 42
+
+features:
+  fragmentomics:
+    short_min: 100
+    short_max: 150
+    long_min: 151
+    long_max: 220
+    kmer_size: 4             # 4-mer 5' end motif frequencies (4^4 = 256 motifs)
+    wps_window_size: 120     # Window protection score window (bp)
+    wps_span: 16             # Central region span (bp)
+    bin_size_kb: 5000        # 5 Mb genomic arm-level windows for DELFI ratio profiles
+  ichorcna:
+    bin_size: "1000kb"       # 1 Mb binning for copy number analysis
+    normal_panel: "references/HD_ULP_PoN_1000kb_hg38.rds"
+    chrs: "c(1:22)"
+    max_copy_number: 7
+    estimate_ploidy: true
+    min_tumor_fraction_threshold: 0.03  # Default detection threshold for standard ichorCNA
+
+training:
+  cv_strategy: "GroupKFold"  # Grouped strictly by patient_id to eliminate data leakage
+  n_splits: 5
+  eval_metric: "roc_auc"
+  fixed_specificities:
+    - 0.95
+    - 0.99
+  models:
+    xgboost:
+      n_estimators: 250
+      max_depth: 4
+      learning_rate: 0.05
+      subsample: 0.8
+      colsample_bytree: 0.8
+      scale_pos_weight: 1.0
+      random_state: 42
+    lightgbm:
+      n_estimators: 250
+      max_depth: 4
+      num_leaves: 15
+      learning_rate: 0.05
+      feature_fraction: 0.8
+      bagging_fraction: 0.8
+      bagging_freq: 5
+      random_state: 42
+    mlp:
+      hidden_dims: [128, 64, 32]
+      dropout: 0.3
+      learning_rate: 0.001
+      weight_decay: 0.0001
+      epochs: 80
+      batch_size: 32
+
+cancer_types:
+  - "Colorectal"
+  - "Lung"
+  - "Breast"
+  - "Ovarian"
+  - "Pancreatic"
+  - "Gastric"
+  - "Bile Duct"

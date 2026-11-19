@@ -1,0 +1,71 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments & virtualenvs
+.venv/
+venv/
+ENV/
+env/
+.conda/
+conda-bld/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# IDE and OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Large Genomic & Sequencing Raw Data
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Sequencing file extensions
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+*.bam
+*.bam.bai
+*.cram
+*.crai
+*.sam
+*.sra
+*.vcf
+*.vcf.gz
+*.vcf.gz.tbi
+*.bw
+*.bigWig
+*.bed.gz
+
+# Model weights, checkpoints, serialized models
+models/*
+!models/.gitkeep
+*.pt
+*.pth
+*.pkl
+*.pickle
+*.joblib
+*.onnx
+
+# Snakemake internal files and logs
+.snakemake/
+logs/
+*.log
+
+# Results outputs (keep tracking .gitkeep and schema templates)
+results/*
+!results/.gitkeep
+!results/README.md
+
+# Local configurations / secrets
+.env
+local_config.yaml

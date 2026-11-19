@@ -1,0 +1,162 @@
+# ==============================================================================
+# Snakemake Workflow: Tumor-Fraction-Aware AI for Early MCED from Liquid Biopsy
+# ==============================================================================
+
+configfile: "config/config.yaml"
+
+import os
+import pandas as pd
+
+# Load sample sheet if present, or use template
+SAMPLE_SHEET = config["paths"]["metadata"] if os.path.exists(config["paths"]["metadata"]) else "data/metadata/sample_sheet_template.csv"
+if os.path.exists(SAMPLE_SHEET):
+    samples_df = pd.read_csv(SAMPLE_SHEET)
+    SAMPLES = samples_df["sample_id"].tolist()
+    CANCER_SAMPLES = samples_df[samples_df["condition"] == "Cancer"]["sample_id"].tolist()
+    HEALTHY_SAMPLES = samples_df[samples_df["condition"] == "Healthy"]["sample_id"].tolist()
+else:
+    SAMPLES = ["SRR12340001", "SRR12340004"]
+    CANCER_SAMPLES = ["SRR12340004"]
+    HEALTHY_SAMPLES = ["SRR12340001"]
+
+TARGET_TFS = config["in_silico_dilution"]["fractions"]
+
+rule all:
+    input:
+        config["paths"]["metrics_csv"],
+        config["paths"]["merged_feature_matrix"]
+
+# ------------------------------------------------------------------------------
+# Rule 1: QC and Sequence Read Alignment
+# ------------------------------------------------------------------------------
+rule qc_and_align:
+    input:
+        r1 = os.path.join(config["paths"]["raw_fastq_dir"], "{sample}_1.fastq.gz"),
+        r2 = os.path.join(config["paths"]["raw_fastq_dir"], "{sample}_2.fastq.gz"),
+        ref = config["paths"]["reference_genome"]
+    output:
+        bam = os.path.join(config["paths"]["raw_bam_dir"], "{sample}.sorted.bam"),
+        bai = os.path.join(config["paths"]["raw_bam_dir"], "{sample}.sorted.bam.bai")
+    threads: 8
+    log:
+        "logs/align/{sample}.log"
+    shell:
+        """
+        mkdir -p {config[paths][raw_bam_dir]} logs/align
+        bwa mem -t {threads} {input.ref} {input.r1} {input.r2} 2> {log} | \
+        samtools sort -@ {threads} -o {output.bam} -
+        samtools index {output.bam}
+        """
+
+# ------------------------------------------------------------------------------
+# Rule 2: In Silico Dilution Titration
+# ------------------------------------------------------------------------------
+rule in_silico_dilution:
+    input:
+        cancer_bam = os.path.join(config["paths"]["raw_bam_dir"], "{cancer_sample}.sorted.bam"),
+        healthy_bam = lambda wc: os.path.join(config["paths"]["raw_bam_dir"], f"{HEALTHY_SAMPLES[0]}.sorted.bam")
+    output:
+        diluted_bam = os.path.join(config["paths"]["diluted_bam_dir"], "{cancer_sample}_diluted_tf_{tf}.bam")
+    params:
+        tf = "{tf}",
+        seed = config["in_silico_dilution"]["seed"],
+        total_reads = config["in_silico_dilution"]["target_total_reads"]
+    log:
+        "logs/dilution/{cancer_sample}_tf_{tf}.log"
+    shell:
+        """
+        python scripts/in_silico_dilution.py \
+            --cancer_bam {input.cancer_bam} \
+            --healthy_bam {input.healthy_bam} \
+            --target_tf {params.tf} \
+            --output_bam {output.diluted_bam} \
+            --total_reads {params.total_reads} \
+            --seed {params.seed} > {log} 2>&1
+        """
+
+# ------------------------------------------------------------------------------
+# Rule 3a: Extract ichorCNA Features (Copy Number & Baseline Tumor Fraction)
+# ------------------------------------------------------------------------------
+rule extract_ichorcna:
+    input:
+        bam = os.path.join(config["paths"]["raw_bam_dir"], "{sample}.sorted.bam")
+    output:
+        cna_params = os.path.join(config["paths"]["features_dir"], "ichorcna", "{sample}.params.txt")
+    params:
+        bin_size = config["features"]["ichorcna"]["bin_size"],
+        pon = config["features"]["ichorcna"]["normal_panel"]
+    log:
+        "logs/ichorcna/{sample}.log"
+    shell:
+        """
+        mkdir -p {config[paths][features_dir]}/ichorcna logs/ichorcna
+        # Wrapper calling readCounter and runIchorCNA.R
+        echo "Running ichorCNA for sample {wildcards.sample}..." > {log}
+        python scripts/extract_features.py \
+            --mode ichorcna \
+            --bam {input.bam} \
+            --output_file {output.cna_params} >> {log} 2>&1
+        """
+
+# ------------------------------------------------------------------------------
+# Rule 3b: Extract FinaleToolkit Fragmentomic Features
+# ------------------------------------------------------------------------------
+rule extract_finaletoolkit:
+    input:
+        bam = os.path.join(config["paths"]["raw_bam_dir"], "{sample}.sorted.bam")
+    output:
+        frag_tsv = os.path.join(config["paths"]["features_dir"], "fragmentomics", "{sample}.tsv")
+    params:
+        kmer = config["features"]["fragmentomics"]["kmer_size"],
+        s_min = config["features"]["fragmentomics"]["short_min"],
+        s_max = config["features"]["fragmentomics"]["short_max"],
+        l_min = config["features"]["fragmentomics"]["long_min"],
+        l_max = config["features"]["fragmentomics"]["long_max"]
+    log:
+        "logs/finaletoolkit/{sample}.log"
+    shell:
+        """
+        mkdir -p {config[paths][features_dir]}/fragmentomics logs/finaletoolkit
+        echo "Extracting fragmentomic profile for sample {wildcards.sample}..." > {log}
+        python scripts/extract_features.py \
+            --mode fragmentomics \
+            --bam {input.bam} \
+            --output_file {output.frag_tsv} >> {log} 2>&1
+        """
+
+# ------------------------------------------------------------------------------
+# Rule 4: Merge Multimodal Features into Standardized Matrix
+# ------------------------------------------------------------------------------
+rule merge_features:
+    input:
+        sample_sheet = SAMPLE_SHEET
+    output:
+        merged_matrix = config["paths"]["merged_feature_matrix"]
+    log:
+        "logs/merge_features.log"
+    shell:
+        """
+        python scripts/extract_features.py \
+            --mode merge \
+            --sample_sheet {input.sample_sheet} \
+            --output_parquet {output.merged_matrix} > {log} 2>&1
+        """
+
+# ------------------------------------------------------------------------------
+# Rule 5: Leakage-Safe Model Training and Sensitivity Benchmarking
+# ------------------------------------------------------------------------------
+rule train_and_evaluate:
+    input:
+        features = config["paths"]["merged_feature_matrix"],
+        config_yaml = "config/config.yaml"
+    output:
+        metrics_csv = config["paths"]["metrics_csv"]
+    log:
+        "logs/train_eval.log"
+    shell:
+        """
+        python scripts/train_eval.py \
+            --features {input.features} \
+            --config {input.config_yaml} \
+            --output_dir {config[paths][results_dir]} > {log} 2>&1
+        """
