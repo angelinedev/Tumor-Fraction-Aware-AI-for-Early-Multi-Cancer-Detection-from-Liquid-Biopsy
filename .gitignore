@@ -17,7 +17,6 @@ conda-bld/
 */.ipynb_checkpoints/*
 
 # IDE and OS metadata
-.vscode/
 .idea/
 .DS_Store
 Thumbs.db
@@ -30,6 +29,7 @@ data/processed/*
 references/tcga_cnv/*
 !references/tcga_cnv/.gitkeep
 scripts/references/
+*.zip
 
 # Sequencing file extensions
 *.fastq
@@ -70,5 +70,6 @@ results/*
 !results/README.md
 
 # Local configurations / secrets
-.env
 local_config.yaml
+config.bat
+node_modules

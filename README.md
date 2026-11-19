@@ -95,7 +95,41 @@ mced-cfdna/
 
 ---
 
-## 🚀 Quick Start
+## 👥 Quick Team Setup Guide (How Any Teammate Can Run in 3 Minutes)
+
+If you are a team member working on this project, follow these 3 simple steps to get everything running on your computer:
+
+### Step 1: Clone the GitHub Repository
+```bash
+git clone https://github.com/angelinedev/Tumor-Fraction-Aware-AI-for-Early-Multi-Cancer-Detection-from-Liquid-Biopsy.git
+cd Tumor-Fraction-Aware-AI-for-Early-Multi-Cancer-Detection-from-Liquid-Biopsy
+```
+
+### Step 2: Install Python Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### Step 3: Extract the Team Data Bundle (`mced_project_data_bundle.zip`)
+To avoid downloading large genomic databases individually, download the **3.0 MB** `mced_project_data_bundle.zip` (shared by the team lead) and extract it directly into the repository root folder.
+
+It automatically unpacks:
+- `data/metadata/sample_sheet.csv` (all 69 patient runs)
+- `data/processed/merged_features.parquet` (pre-computed 272 features)
+- `references/tcga_cnv/` (all 500 TCGA lung/kidney/brain tumor segment files)
+- `results/` (pre-computed metrics, figures, and predictions)
+
+*(Note: To re-generate this zip file at any time from source, simply run `python scripts/package_team_data.py`).*
+
+### Step 4: Open and Run Any Notebook or App!
+Now you can immediately run:
+- **Jupyter Notebooks:** Open any notebook in [`notebooks/eda/`](notebooks/eda/) or [`notebooks/models/`](notebooks/models/).
+- **Live Streamlit Dashboard:** Run `streamlit run dashboard/app.py` in your terminal.
+- **Unit Tests:** Run `pytest tests/ -v` (all 5 tests should pass).
+
+---
+
+## 🚀 Pipeline CLI Execution
 
 ### 1. Set Up Your Environment
 ```bash
