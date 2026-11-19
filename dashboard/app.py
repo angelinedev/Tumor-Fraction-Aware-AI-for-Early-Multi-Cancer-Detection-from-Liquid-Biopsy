@@ -81,7 +81,7 @@ if not METRICS_PATH.exists() or os.path.getsize(METRICS_PATH) == 0:
             #### How to Generate Results:
             **Step 1:** Extract multimodal fragmentomic + ichorCNA features:
             ```bash
-            python scripts/extract_features.py --mode merge --sample_sheet data/metadata/sample_sheet_template.csv --output_parquet data/processed/merged_features.parquet
+            python scripts/extract_features.py --mode merge --sample_sheet data/metadata/sample_sheet.csv --output_parquet data/processed/merged_features.parquet
             ```
 
             **Step 2:** Train zero-leakage patient-grouped models and benchmark against ichorCNA:
@@ -103,7 +103,7 @@ if not METRICS_PATH.exists() or os.path.getsize(METRICS_PATH) == 0:
                     res1 = subprocess.run([
                         sys.executable, "scripts/extract_features.py",
                         "--mode", "merge",
-                        "--sample_sheet", "data/metadata/sample_sheet_template.csv",
+                        "--sample_sheet", "data/metadata/sample_sheet.csv",
                         "--output_parquet", "data/processed/merged_features.parquet"
                     ], capture_output=True, text=True, check=True)
 

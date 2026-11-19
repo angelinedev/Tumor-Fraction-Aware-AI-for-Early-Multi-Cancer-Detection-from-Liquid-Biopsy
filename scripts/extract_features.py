@@ -57,7 +57,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--sample_sheet",
         type=str,
-        default="data/metadata/sample_sheet_template.csv",
+        default="data/metadata/sample_sheet.csv",
         help="Path to sample manifest CSV."
     )
     parser.add_argument(

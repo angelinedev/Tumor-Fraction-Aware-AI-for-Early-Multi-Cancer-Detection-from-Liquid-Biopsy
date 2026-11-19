@@ -7,8 +7,8 @@ configfile: "config/config.yaml"
 import os
 import pandas as pd
 
-# Load sample sheet if present, or use template
-SAMPLE_SHEET = config["paths"]["metadata"] if os.path.exists(config["paths"]["metadata"]) else "data/metadata/sample_sheet_template.csv"
+# Load sample sheet if present
+SAMPLE_SHEET = config["paths"]["metadata"] if os.path.exists(config["paths"]["metadata"]) else "data/metadata/sample_sheet.csv"
 if os.path.exists(SAMPLE_SHEET):
     samples_df = pd.read_csv(SAMPLE_SHEET)
     SAMPLES = samples_df["sample_id"].tolist()

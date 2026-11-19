@@ -27,6 +27,9 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+references/tcga_cnv/*
+!references/tcga_cnv/.gitkeep
+scripts/references/
 
 # Sequencing file extensions
 *.fastq

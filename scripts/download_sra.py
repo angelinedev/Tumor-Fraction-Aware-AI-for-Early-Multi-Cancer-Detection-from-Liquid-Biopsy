@@ -37,7 +37,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--metadata",
         type=str,
-        default="data/metadata/sample_sheet_template.csv",
+        default="data/metadata/sample_sheet.csv",
         help="Path to SraRunTable.csv or sample_sheet.csv manifest."
     )
     parser.add_argument(

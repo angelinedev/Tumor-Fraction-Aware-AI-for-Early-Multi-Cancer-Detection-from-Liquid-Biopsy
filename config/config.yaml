@@ -23,6 +23,7 @@ paths:
   reference_genome: "references/GRCh38.fa"
   chrom_sizes: "references/GRCh38.chrom.sizes"
   mappability_blacklist: "references/hg38-blacklist.v2.bed"
+  tcga_cnv_dir: "references/tcga_cnv"
 
 in_silico_dilution:
   # Target tumor fractions evaluated for low-TF sensitivity analysis
